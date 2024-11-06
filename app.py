@@ -1,67 +1,73 @@
 from flask import Flask, url_for, render_template
 import psycopg2
+import os
 from psycopg2.extras import RealDictCursor
 
 # define the application
 app = Flask(__name__)
 
 # define the connection string
-connString = "postgresql://sterlingmichel:va29PtHWE7dGaEAuJ8ceNPAObF7Esrbp@dpg-cshq6t68ii6s73bjvcpg-a.oregon-postgres.render.com/sterlingmichel_db"
+connString = os.environ.get("POSTGRESQL")
 
 
 @app.route("/")
 def index():
     return """
-        <style>
-            button {
-                border: 1px #ccc solid;
-                border-radius: 10px;
-                padding: 4px;
-            }
-        </style>
-        <script type="text/javascript">
-            function addMsg(msg) {
-                document.getElementById('msg').innerHTML = msg;
-            }
+        <html>
+            <head>
+                <style>
+                    button {
+                        border: 1px #ccc solid;
+                        border-radius: 10px;
+                        padding: 4px;
+                    }
+                </style>
+                <script type="text/javascript">
+                    function addMsg(msg) {
+                        document.getElementById('msg').innerHTML = msg;
+                    }
 
-            function runRoute(url) {
-                fetch(url)
-                .then((result) => {
-                    console.log("==", result)
-                    result
-                        .json()
-                        .then((data) => {
-                            if(typeof(data.info) === 'object') {
-                                addMsg(JSON.stringify(data.info, null, 1));
-                            } else {
-                                addMsg(data.info);
-                            }
+                    function runRoute(url) {
+                        fetch(url)
+                        .then((result) => {
+                            console.log("==>>", result)
+                            result
+                                .json()
+                                .then((data) => {
+                                    if(typeof(data.info) === 'object') {
+                                        addMsg(JSON.stringify(data.info, null, 1));
+                                    } else {
+                                        addMsg(data.info);
+                                    }
+                                })
+                                .catch((err) => {
+                                addMsg("Server Connection Error. Message was: " + err);
+                                })
                         })
                         .catch((err) => {
-                           addMsg("Server Connection Error. Message was: " + err);
-                        })
-                })
-                .catch((err) => {
-                    addMsg("Server Connection Error. Message was: " + err);
-                });
-            }
-        </script>
+                            addMsg("Server Connection Error. Message was: " + err);
+                        });
+                    }
+                </script>
+            </head>
+            <body>
+                <p>Hello World</p>
+                <p>please trigger the action below</p>
 
-        <p>Hello World</p>
-        <p>please trigger the action below</p>
-
-        <button onClick="runRoute('/about')">Author Information</button>
-        &nbsp;
-        <button onClick="runRoute('/db_test')">Test DB Connection</button>
-        &nbsp;
-        <button onClick="runRoute('/db_create')">Create DB Schema</button>
-        &nbsp;
-        <button onClick="runRoute('/db_drop')">Drop DB Schema</button>
-        &nbsp;
-        <button onClick="runRoute('/db_select)">Select DB Schema</button>
-        <p>
-            <div>Status: <span id="msg"></span></div>
-        </p>
+                <button onClick="runRoute('/about')">Author Information</button>
+                &nbsp;
+                <button onClick="runRoute('/db_test')">Test DB Connection</button>
+                &nbsp;
+                <button onClick="runRoute('/db_create')">Create DB Schema</button>
+                &nbsp;
+                <button onClick="runRoute('/db_drop')">Drop DB Schema</button>
+                &nbsp;
+                <button onClick="runRoute('/db_select)">Select DB Schema</button>
+                <p>
+                    <div>Status: <span id="msg"></span></div>
+                </p>
+            </body>
+        </html>
     """
 
 
@@ -211,28 +217,33 @@ def db_view():
 
     return {"info": info, "records": records}
 
+
 @app.route("/db_select")
 def db_select():
     # grab the
     record_fnc = db_view()
 
     out = ""
-    if len(record_fnc['records']) > 0:
+    if len(record_fnc["records"]) > 0:
         # store the rows
         tr = []
 
-        tr.append('<thead>')
-        [ tr.append('<th>' + x + '</th>') for x in record_fnc['records'][0]]
-        tr.append('</thead>')
+        tr.append("<thead>")
+        [tr.append("<th>" + x + "</th>") for x in record_fnc["records"][0]]
+        tr.append("</thead>")
 
-        tr.append('<tbody>')
-        for x in range(0, len(record_fnc['records'])):
+        tr.append("<tbody>")
+        for x in range(0, len(record_fnc["records"])):
             tr.append("<tr>")
-            for (col, val) in record_fnc['records'][x].items():
+            for col, val in record_fnc["records"][x].items():
                 tr.append("<td>" + str(val) + "</td>")
             tr.append("</tr>")
-        tr.append('</tbody')
+        tr.append("</tbody")
 
-        out = '<table border="1" cellpadding="1" cellspacing="1" width="100%">' + ''.join(tr) + '</table>'
+        out = (
+            '<table border="1" cellpadding="1" cellspacing="1" width="100%">'
+            + "".join(tr)
+            + "</table>"
+        )
 
     return out
