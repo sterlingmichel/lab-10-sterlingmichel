@@ -28,6 +28,7 @@ def index():
                     }
 
                     function runRoute(url) {
+                    console.log("url==>>", url);
                         fetch(url)
                         .then((result) => {
                             console.log("==>>", result)
